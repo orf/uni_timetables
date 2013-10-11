@@ -1,0 +1,18 @@
+<div class="row">
+    <div class="col-sm-5 pull-left">
+       <div class="row">
+           <div class="col-sm-12">
+                {{ item.room }}
+           </div>
+       </div>
+       <div class="row">
+           <div class="col-sm-12">
+               {{ item.module.code }}
+           </div>
+       </div>
+    </div>
+    <div class="col-sm-7 pull-right">
+        {% if item.staff %}<p>{{ item.staff }}</p>{% endif %}
+        <p>{{ item.weeks|join(', ') }}</p>
+    </div>
+</div>

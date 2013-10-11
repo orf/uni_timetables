@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Timetable</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="{{ url_for('static', filename='css/bootstrap.css') }}"
+          rel="stylesheet" media="screen">
+    <script src="{{ url_for('static', filename='jquery.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
+
+    <script>
+        $(document).ready(function(){
+            $('.accordion-toggle button').click(function(e){
+              e.preventDefault();
+              e.stopPropagation();
+            });
+        })
+    </script>
+
+    <style>
+        td p {
+            margin: 0;
+            padding: 0;
+        }
+    </style>
+
+</head>
+
+<body>
+
+    <p>Timetables for modules:</p>
+    <p class="visible-sm visible-xs">(Select day to view)</p>
+    <p>
+    <ul>
+        {% for m in modules %}
+            <li class="visible-md visible-lg"><div class="col-md-1"
+                                                   style="background-color: {{ colours.get_color(m.id) }}">{{ m.code }}</div>
+                <div class="col-md-1"></div>
+                {{ m.name }}
+            </li>
+            <li class="visible-sm visible-xs">{{ m.code }} {{ m.name }}</li>
+        {% endfor %}
+    </ul>
+    </p>
+
+    <div class="visible-md visible-lg">
+         <div class="table-responsive">
+            <table class="table-bordered">
+                <thead>
+                    <tr>
+                        <th width="5%"></th>
+                        {% for time in columns %}
+                            <th width="{{ (95 / (columns|length))|round(1) }}%">{{ time.strftime("%H:%M") }}</th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% for day in days %}
+                        {% with rows=module_dict[day].get_rows() %}
+                            {% for row in rows %}
+                                <tr>
+                                    {% if loop.first %}
+                                        <td rowspan="{{ rows|length }}">{{ day }}</td>
+                                    {% endif %}
+
+                                    {% for item in row.get_elements() %}
+                                        {% if item == None %}
+                                            <td></td>
+                                        {% elif item != 1 %}
+                                            <td colspan="{{ item.col_span(increment) }}"
+                                                style="background-color: {{ colours.get_color(item.module_id) }};
+                                                        -ms-word-wrap: break-word;
+                                                        word-wrap: break-word;">
+                                                {% include "lecture_node.html" %}
+                                            </td>
+                                        {% endif %}
+                                    {% endfor %}
+                                </tr>
+                            {% endfor %}
+                        {% endwith %}
+                    {% endfor %}
+                </tbody>
+            </table>
+         </div>
+    </div>
+
+    <div class="visible-sm visible-xs">
+       <div class="panel-group" id="accordion">
+          {% for day in days %}
+              {% with weekday=module_dict[day] %}
+                  {% if weekday.has_lessons() %}
+                  <div class="panel panel-default">
+                    <div class="panel-heading" style="cursor: pointer;"
+                         data-toggle="collapse" data-parent="#accordion" href="#{{ day }}">
+                      <h4 class="panel-title">
+                          {{ day }} ({{ weekday.get_lesson_count() }} lectures)
+                      </h4>
+                    </div>
+
+                    <div id="{{ day }}" class="panel-collapse collapse {% if current_day == day %}in{% endif %}">
+                      <div class="panel-body">
+                          {% for timeslot,lessons in weekday.flatten_rows() %}
+                                <div class="container">
+                                    <div class="row">
+                                        <div class="col-md-6"><h5><strong>{{ timeslot }}</strong></h5></div>
+                                    </div>
+                                    {% for lesson in lessons %}
+                                        <div class="row">
+                                            <div class="col-xs-2">{{ lesson.module.code }}</div>
+                                            <div class="col-xs-2">{{ lesson.room }}</div>
+                                            <div class="col-xs-2">Fin: {{ lesson.end.strftime("%H:%M") }}</div>
+                                            <div class="col-xs-3">{% if lesson.staff %}{{ lesson.staff }}{% endif %}</div>
+                                            <div class="col-xs-3">{{ lesson.weeks|join(', ') }}</div>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                          {% endfor %}
+                      </div>
+                    </div>
+                  </div>
+                  {% endif %}
+              {% endwith %}
+          {% endfor %}
+        </div>
+    </div>
+</body>
+</html>
