@@ -3,6 +3,7 @@ import bs4
 import timetables
 import datetime
 import os
+import sys
 
 Module = namedtuple("Module", "code weeks name")
 Lecture = namedtuple("Lesson", "activity start end weeks room staff")
@@ -51,6 +52,8 @@ def import_into_db(modules_dict, dept_name):
         if not module_db.lectures:
             timetables.db.session.delete(module_db)
 
+        sys.stdout.write(".")
+    sys.stdout.write("\n")
     timetables.db.session.commit()
 
 
