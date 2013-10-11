@@ -53,6 +53,7 @@ def import_into_db(modules_dict, dept_name):
             timetables.db.session.delete(module_db)
 
         sys.stdout.write(".")
+        sys.stdout.flush()
     sys.stdout.write("\n")
     timetables.db.session.commit()
 
