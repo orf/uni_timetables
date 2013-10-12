@@ -231,10 +231,15 @@ def timetable():
     else:
         colour_manager = ColourManager()
 
+    try:
+        current_day = DAYS[datetime.date.today().weekday()]
+    except IndexError:
+        current_day = None
+
     return render_template("timetable_page.html", modules=modules,
                            columns=column_generated, days=DAYS,
                            module_dict=module_dict, increment=increment,
-                           current_day=DAYS[datetime.date.today().weekday()],
+                           current_day=current_day,
                            colours=colour_manager)
 
 @app.route('/', methods=("GET", "POST"))
