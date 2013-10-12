@@ -68,7 +68,7 @@ def parse_module_header(node):
     I take a module header table and return a Module object
     """
     code_table = node.find("table", attrs={"class": "header-0-args"})
-    module_code = code_table.find("span", attrs={"header-0-0-0"}).text
+    module_code = code_table.find("span", attrs={"class": "header-0-0-0"}).text
 
     week_table = node.find("table", attrs={"class": "header-1-args"})
     module_weeks = week_table.find("span", attrs={"class": "header-1-2-1"}).text
