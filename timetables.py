@@ -55,9 +55,18 @@ class Lecture(db.Model):
     def __repr__(self):
         return "<Lesson %s on %s:%s>" % (self.activity, self.day, self.start)
 
+    @staticmethod
+    def _total_seconds(td):
+        # Keep backward compatibility with Python 2.6 which doesn't have
+        # this method
+        if hasattr(td, 'total_seconds'):
+            return td.total_seconds()
+        else:
+            return (td.microseconds + (td.seconds + td.days * 24 * 3600) * 10**6) / 10**6
+
     def col_span(self, increment):
-        return int((dt(self.end) - dt(self.start)).total_seconds()
-                   / increment.total_seconds())
+        return int(self._total_seconds(dt(self.end) - dt(self.start))
+                   / self._total_seconds(increment))
 
 
 class LectureWeek(db.Model):
