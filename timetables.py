@@ -1,11 +1,12 @@
-from flask import Flask, render_template, request, abort
+from flask import Flask, render_template, request, abort, make_response
 from flask.ext.sqlalchemy import SQLAlchemy
 from flask_wtf import Form
 from wtforms import SelectMultipleField, SelectField
 from sqlalchemy.orm.exc import NoResultFound
-from sqlalchemy.orm import subqueryload
 from collections import defaultdict
 import datetime
+import icalendar
+import itertools
 
 app = Flask(__name__)
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///test.db"
@@ -16,7 +17,8 @@ db = SQLAlchemy(app)
 
 START_HOUR = datetime.time(hour=9, minute=15)
 END_HOUR = datetime.time(hour=17, minute=45)
-DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
+DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+WEEK_ONE = datetime.date(year=2013, month=7, day=29)
 
 
 def dt(time):
@@ -38,6 +40,9 @@ class Module(db.Model):
 
     dept_id = db.Column(db.Integer, db.ForeignKey('department.id'))
     lectures = db.relationship("Lecture", backref=db.backref("module", lazy="joined"))
+
+    def get_events(self):
+        return itertools.chain(*[l.get_events() for l in self.lectures])
 
 
 class Lecture(db.Model):
@@ -69,6 +74,24 @@ class Lecture(db.Model):
         return int(self._total_seconds(dt(self.end) - dt(self.start))
                    / self._total_seconds(increment))
 
+    def get_events(self):
+        events = []
+
+        for lecture_week in self.weeks:
+            for week_num, week_starting in lecture_week.get_date_list():
+                actual_date = week_starting + datetime.timedelta(days=DAYS.index(self.day))
+
+                ev = icalendar.Event()
+                ev.add("summary", "Module %s week %s" % (self.module.code , week_num))
+                ev.add("dtstart", datetime.datetime.combine(actual_date, self.start))
+                ev.add("dtend", datetime.datetime.combine(actual_date, self.end))
+                if self.room:
+                    ev.add("location", self.room)
+
+                events.append(ev)
+
+        return events
+
 
 class LectureWeek(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -82,6 +105,13 @@ class LectureWeek(db.Model):
 
     def __repr__(self):
         return "<LessonWeek: %s-%s for %s>" % (self.week_start, self.week_end, self.lesson_id)
+
+    def get_date_list(self):
+        """
+        Returns a list of date objects representing the weeks the lecture appears on
+        """
+        #print self.week_start, self.week_end
+        return [(x, WEEK_ONE + datetime.timedelta(weeks=x-1)) for x in xrange(self.week_start, self.week_end + 1)]
 
 
 class WeekDay(object):
@@ -206,10 +236,29 @@ def column_generator(increment):
         yield start.time()
 
 
+@app.route("/calendar")
+def create_calendar():
+    cal = icalendar.Calendar()
+    cal.add("prodid", '-//Hull uni timetables//mxm.dk//')
+    cal.add("version", "0.5")
+
+    module_codes = request.args.get("modules", "").split(",")
+    modules = Module.query.filter(Module.code.in_(module_codes)).all()
+
+    for module in modules:
+        for event in module.get_events():
+            cal.add_component(event)
+
+    r = make_response(cal.to_ical())
+    r.headers['Content-Disposition'] = 'attachment; filename=calendar.ical'
+    r.headers['Content-Type'] = "text/calendar"
+    return r
+
+
 @app.route("/timetable")
 def timetable():
     module_codes = request.args.get("modules", "").split(",")
-    modules = Module.query.filter(Module.code.in_(module_codes)).filter(LectureWeek.week_start > 20) .all()
+    modules = Module.query.filter(Module.code.in_(module_codes)).all()
 
     increment = datetime.timedelta(minutes=30)
 
@@ -232,16 +281,13 @@ def timetable():
     else:
         colour_manager = ColourManager()
 
-    try:
-        current_day = DAYS[datetime.date.today().weekday()]
-    except IndexError:
-        current_day = None
+    current_day = DAYS[datetime.date.today().weekday()]
 
     return render_template("timetable_page.html", modules=modules,
                            columns=column_generated, days=DAYS,
                            module_dict=module_dict, increment=increment,
                            current_day=current_day,
-                           colours=colour_manager)
+                           colours=colour_manager, modules_string=request.args.get("modules", ""))
 
 @app.route('/', methods=("GET", "POST"))
 def index():

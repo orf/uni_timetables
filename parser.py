@@ -15,6 +15,10 @@ def import_into_db(modules_dict, dept_name):
 
     for module, days_dict in modules_dict.items():
         week_start, week_end = module.weeks.split("-")
+
+        week_start = int(week_start.strip())
+        week_end = int(week_end.strip())
+
         module_db = timetables.Module(code=module.code, department=dept, name=module.name,
                                       week_start=week_start, week_end=week_end)
         timetables.db.session.add(module_db)
@@ -40,9 +44,10 @@ def import_into_db(modules_dict, dept_name):
 
                 for week_group in lesson_weeks:
                     if len(week_group) == 1:
-                        week_start, week_end = week_group[0], week_group[0]
+                        week_start, week_end = int(week_group[0].strip()), int(week_group[0].strip())
                     else:
                         week_start, week_end = week_group
+                        week_start, week_end = int(week_start.strip()), int(week_end.strip())
 
                     lesson_week = timetables.LectureWeek(lecture=lesson_db, week_start=week_start, week_end=week_end)
                     timetables.db.session.add(lesson_week)
