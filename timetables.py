@@ -10,6 +10,7 @@ import datetime
 app = Flask(__name__)
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///test.db"
 app.config["WTF_CSRF_ENABLED"] = False
+app.config["ANALYTICS_ID"] = "UA-7457807-9"
 db = SQLAlchemy(app)
 
 
