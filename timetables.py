@@ -28,7 +28,8 @@ def dt(time):
 class Department(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(30), unique=True)
-    modules = db.relationship("Module", cascade="all,delete-orphan", backref=db.backref("department", lazy="joined"))
+    modules = db.relationship("Module", cascade="all,delete-orphan",
+                              backref=db.backref("department", lazy="joined"), order_by="Module.code")
 
 
 class Module(db.Model):
