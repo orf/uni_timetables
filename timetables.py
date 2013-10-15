@@ -83,7 +83,7 @@ class Lecture(db.Model):
                 actual_date = week_starting + datetime.timedelta(days=DAYS.index(self.day))
 
                 ev = icalendar.Event()
-                ev.add("summary", "Module %s week %s" % (self.module.code , week_num))
+                ev.add("summary", "Module %s:%s week %s" % (self.module.code, self.module.name, week_num))
                 ev.add("dtstart", datetime.datetime.combine(actual_date, self.start))
                 ev.add("dtend", datetime.datetime.combine(actual_date, self.end))
                 if self.room:
