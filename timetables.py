@@ -294,6 +294,7 @@ def timetable():
 def index():
     form = TimeTableForm()
     form.department.choices = [(o.name, o.name) for o in Department.query.all()]
+    dept = None
 
     if request.args.get("department", None):
         try:
@@ -305,7 +306,7 @@ def index():
 
     #form.modules.choices = [(str(o.id), o.code) for o in Module.query.all()]
 
-    return render_template("landing_page.html", form=form)
+    return render_template("landing_page.html", form=form, department=dept)
 
 
 if __name__ == '__main__':

@@ -34,7 +34,7 @@
         <div class="navbar navbar-inverse navbar-fixed-top">
           <div class="container">
             <div class="navbar-header">
-              <a class="navbar-brand" href="#">Hull Timetables</a>
+              <a class="navbar-brand" href="/">Hull Timetables</a>
             </div>
           </div>
         </div>
@@ -45,7 +45,7 @@
             <div class="form-group">
                 <label class="col-lg-2 control-label" for="department">Department</label>
                 <div class="col-lg-10">
-                    {{ form.department() }}
+                    {% if department %}{{ department.name }}{% else %}{{ form.department() }}{% endif %}
                 </div>
             </div>
             {% if form.modules.choices %}
@@ -58,7 +58,8 @@
             {% endif %}
                 <div class="form-group">
                     <div class="col-lg-offset-2 col-lg-10">
-                      <button type="submit" class="btn btn-default">Submit</button>
+                      <button type="submit" class="btn btn-primary">Submit</button>
+                      {% if department %}<a href="/" class="btn btn-default">Back</a>{% endif %}
                     </div>
               </div>
             </form>
