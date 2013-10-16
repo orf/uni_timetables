@@ -298,6 +298,7 @@ def index():
     if request.args.get("department", None):
         try:
             dept = Department.query.filter_by(name=request.args["department"]).one()
+            form.department.data = dept.name
             form.modules.choices = [(o.code, "%s %s" % (o.code, o.name or "")) for o in dept.modules]
         except NoResultFound:
             return abort(404)
